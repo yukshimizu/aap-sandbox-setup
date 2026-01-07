@@ -1,0 +1,16 @@
+---
+aws_vpc: demo_vpc
+aws_vpc_cidr_block: 10.0.0.0/16 # adjust with your preference
+aws_vpc_subnet_name: demo_subnet
+aws_subnet_cidr_block: 10.0.1.0/24 # adjust with your preference
+aws_igw_name: demo_gtw
+aws_routetable_name: demo_rtb
+aws_securitygroup_name: demo_sg
+
+purpose: demo
+
+aws_aap_instance_ami: ami-07b1660a28c21d579 # ami of RHEL-9.6.0_HVM-20251030-x86_64-0-Access2-GP3
+aws_aap_instance_size: t2.xlarge # should not be modified
+
+aap_vm_type: aap # should not be modified
+aap_vm_name: aap01
