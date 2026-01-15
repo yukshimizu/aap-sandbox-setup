@@ -1,0 +1,152 @@
+---
+- name: Create an AAP VM on Azure
+  hosts: localhost
+  gather_facts: false
+  vars:
+    az_vm_ssh_public_key: "{{ lookup('file', az_ssh_public_key_path) }}"
+
+  tasks:
+    - name: Fail if variables not defined
+      ansible.builtin.assert:
+        that:
+          - az_resource_group is defined
+          - az_vnet is defined
+          - az_vnet_subnet_name is defined
+          - az_securitygroup_name is defined
+          - az_vm_ssh_public_key is defined
+          - az_aap_vm_size is defined
+          - az_aap_vm_image_sku is defined
+          - aap_vm_name is defined
+          - aap_vm_type is defined
+          - purpose is defined
+        fail_msg: "Required variables not set"
+
+    - name: Check if the VM is already provisioned
+      azure.azcollection.azure_rm_virtualmachine_info:
+        resource_group: "{{ az_resource_group }}"
+        name: "{{ aap_vm_name }}"
+        tags:
+          - "purpose:demo"
+          - "type:aap"
+      register: existing_vm
+      ignore_errors: true
+
+    - name: Output the status of existing VM
+      ansible.builtin.debug:
+        msg:
+          - "The AAP VM looks like already provisioned. Please check the VM."
+          - "Power State of the VM: {{ existing_vm.vms[0].power_state }}"
+      when: existing_vm.vms is defined and existing_vm.vms | length > 0
+
+    - name: Create VM
+      when: existing_vm.vms is undefined
+      block:
+        - name: Create a public IP address
+          azure.azcollection.azure_rm_publicipaddress:
+            resource_group: "{{ az_resource_group }}"
+            allocation_method: Static
+            name: "{{ aap_vm_name }}-ip"
+            domain_name: "{{ aap_vm_name }}"
+            tags:
+              purpose: "{{ purpose }}"
+              type: "{{ aap_vm_type }}"
+          register: az_public_ip
+
+        - name: Create a virtual network inteface card
+          azure.azcollection.azure_rm_networkinterface:
+            resource_group: "{{ az_resource_group }}"
+            name: "{{ aap_vm_name }}-nic"
+            virtual_network: "{{ az_vnet }}"
+            subnet: "{{ az_vnet_subnet_name }}"
+            security_group: "{{ az_securitygroup_name }}"
+            ip_configurations:
+              - name: ipconfig1
+                public_ip_address_name: "{{ aap_vm_name }}-ip"
+                primary: true
+            tags:
+              purpose: "{{ purpose }}"
+              type: "{{ aap_vm_type }}"
+
+        - name: Read cloud-init file
+          ansible.builtin.set_fact:
+            cloud_init_text: "{{ lookup('file', 'cloud-init.yml') }}"
+
+        - name: Create the VM
+          azure.azcollection.azure_rm_virtualmachine:
+            resource_group: "{{ az_resource_group }}"
+            name: "{{ aap_vm_name }}"
+            vm_size: "{{ az_aap_vm_size }}"
+            admin_username: azureuser
+            ssh_password_enabled: false
+            ssh_public_keys:
+              - path: /home/azureuser/.ssh/authorized_keys
+                key_data: "{{ az_vm_ssh_public_key }}"
+            custom_data: "{{ cloud_init_text }}"
+            network_interfaces: "{{ aap_vm_name }}-nic"
+            managed_disk_type: StandardSSD_LRS
+            os_disk_size_gb: 64
+            image:
+              offer: rhel-byos
+              publisher: redhat
+              sku: "{{ az_aap_vm_image_sku }}"
+              version: latest
+            plan:
+              name: "{{ az_aap_vm_image_sku }}"
+              product: rhel-byos
+              publisher: redhat
+            data_disks:
+              - lun: 0
+                disk_size_gb: 64
+                managed_disk_type: StandardSSD_LRS
+                caching: ReadOnly
+            tags:
+              purpose: "{{ purpose }}"
+              type: "{{ aap_vm_type }}"
+          register: az_vm
+
+        - name: Output the IP of new VM
+          ansible.builtin.debug:
+            msg:
+              - "Public FQDN for new instance: {{ az_public_ip.state.dns_settings.fqdn | default('') }}"
+              - "Public IP for new instance: {{ az_public_ip.state.ip_address | default('') }}"
+              - "Private IP for new instance:
+               {{ az_vm.ansible_facts.azure_vm.network_profile.network_interfaces[0].properties.ip_configurations[0].private_ip_address | default('') }}"
+          when: az_public_ip is defined and az_vm is defined
+
+        - name: Wait for the VM to be ready
+          ansible.builtin.wait_for:
+            delay: 60
+            host: "{{ az_public_ip.state.dns_settings.fqdn }}"
+            port: 22
+            state: started
+            timeout: 300
+          when: az_public_ip.state.dns_settings.fqdn is defined and az_public_ip.state.dns_settings.fqdn | length > 0
+
+        - name: Add the instance to the aap group
+          ansible.builtin.add_host:
+            name: "{{ az_public_ip.state.dns_settings.fqdn }}"
+            groups: aap
+
+        - name: Set private_dns_name
+          ansible.builtin.set_fact:
+            private_dns_name: "{{ aap_vm_name }}.internal.cloudapp.net"
+
+- name: Configure AAP server
+  hosts: aap
+  gather_facts: true
+  vars:
+    aap_private_dns_name: "{{ hostvars.localhost.private_dns_name }}"
+
+  vars_prompt:
+    - name: rhsm_username
+      prompt: "What is your Red Hat login name?"
+      private: false
+    - name: rhsm_passwd
+      prompt: "What is your Red Hat login password?"
+    - name: aap_admin_passwd
+      prompt: "Enter your AAP admin password"
+    - name: aap_pg_passwd
+      prompt: "Enter your PostgreSQL password for AAP"
+
+  roles:
+    - aap

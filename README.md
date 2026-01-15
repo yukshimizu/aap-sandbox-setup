@@ -5,7 +5,7 @@ This repo includes ansible playbooks and roles for setting up a sandbox environm
 |Directory           |Description|
 |:-------------------|:----------|
 |[aws](aws/README.md)|Playbooks for deployng on AWS.|
-|azure (future)      |Playbooks for deployng on Azure.|
+|[azure](azure/README.md)|Playbooks for deployng on Azure.|
 |roles               |Shared roles used by above playbooks.|
 
 ### Roles
@@ -16,7 +16,10 @@ This repo includes ansible playbooks and roles for setting up a sandbox environm
 
 ## Required subscriptions
 Basically, the demo environment requires to get access to Red Hat gold image, so you must have a matching Red Hat product subscription and must connect their cloud provider accounts to Red Hat.
-Please refer to the [Cloud Access user interface](https://access.redhat.com/management/cloud) or Cloud Sources on [cloud.redhat.com](https://cloud.redhat.com/) as described in [Chapter 8, Red Hat Cloud Access program overview](https://access.redhat.com/documentation/en-us/subscription_central/2023/html/red_hat_cloud_access_reference_guide/getting-started-with-ca_cloud-access).
+Please refer to the [Cloud Access user interface](https://access.redhat.com/management/cloud) or Cloud Sources on [cloud.redhat.com](https://cloud.redhat.com/) as described in [Chapter 8, Red Hat Cloud Access program overview](https://docs.redhat.com/en/documentation/subscription_central/1-latest/html/getting_started_with_rhel_system_registration/red-hat-cloud-access-program-overview_).
+
+- AWS - [8.2. Using gold images on Amazon Web Services (AWS)](https://docs.redhat.com/en/documentation/subscription_central/1-latest/html/getting_started_with_rhel_system_registration/red-hat-cloud-access-program-overview_#using-gold-images-on-aws_understanding-gold-images)
+- Azure - [8.3. Using gold images on Azure](https://docs.redhat.com/en/documentation/subscription_central/1-latest/html/getting_started_with_rhel_system_registration/red-hat-cloud-access-program-overview_#using-gold-images-on-azure_using-gold-images-on-aws)
 
 Required subscriptions:
 - Red Hat Enterprise Linux for x86_64

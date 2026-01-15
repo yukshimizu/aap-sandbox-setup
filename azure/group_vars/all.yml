@@ -1,0 +1,17 @@
+---
+az_location: japaneast # adjust with your preference
+az_resource_group: aap_sandbox
+az_vnet: demo_vnet
+az_vnet_cidr_block: 10.1.0.0/16 # adjust with your preference
+az_subnet_cidr_block: 10.1.1.0/24 # adjust with your preference
+az_vnet_subnet_name: demo_subnet
+az_securitygroup_name: demo_sg
+az_ssh_public_key_path: /path_to/public_key_file # adjust with your preference
+
+purpose: demo # should not be modified
+
+az_aap_vm_image_sku: rhel-lvm97-gen2 # Red Hat Enterprise Linux 9.7 (BYOS) - x64 Gen2
+az_aap_vm_size: Standard_D4s_v3 # should not be modified
+
+aap_vm_type: aap # should not be modified
+aap_vm_name: aap01

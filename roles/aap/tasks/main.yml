@@ -20,6 +20,7 @@
     username: "{{ rhsm_username }}"
     password: "{{ rhsm_passwd }}"
   become: true
+  ignore_errors: true
 
 - name: Patch rhsm config
   ansible.builtin.command: subscription-manager config --rhsm.manage_repos=1
@@ -31,6 +32,7 @@
   ansible.builtin.command: subscription-manager refresh
   become: true
   register: cmd_output
+  ignore_errors: true
   changed_when: cmd_output.rc == 0
   notify: Dnf clean
 
@@ -62,12 +64,26 @@
     regexp: '^ansible_connection='
     line: "ansible_connection=local"
 
-# This role assumes using bundled installer
-- name: Modify bundle_dir of inventory
+# When using bundled installer
+# - name: Modify bundle_dir of inventory
+#   ansible.builtin.lineinfile:
+#     path: "{{ aap_base_dir }}/{{ aap_installer_dest_path }}/inventory-growth"
+#     regexp: '^bundle_dir'
+#     line: "bundle_dir={{ aap_base_dir }}/{{ aap_installer_dest_path }}/bundle"
+
+# When using online installer
+- name: Modify RHN username of inventory
   ansible.builtin.lineinfile:
     path: "{{ aap_base_dir }}/{{ aap_installer_dest_path }}/inventory-growth"
-    regexp: '^bundle_dir'
-    line: "bundle_dir={{ aap_base_dir }}/{{ aap_installer_dest_path }}/bundle"
+    regexp: '^registry_username='
+    line: "registry_username='{{ rhsm_username }}'"
+
+# When using online installer
+- name: Modify RHN username of inventory
+  ansible.builtin.lineinfile:
+    path: "{{ aap_base_dir }}/{{ aap_installer_dest_path }}/inventory-growth"
+    regexp: '^registry_password='
+    line: "registry_password='{{ rhsm_passwd }}'"
 
 - name: Modify FQDN of inventory
   ansible.builtin.replace:

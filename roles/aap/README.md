@@ -10,6 +10,7 @@ Basically, the role assumes to setup a containerized Ansible Automation Platform
 
 The tested environment:
 - RHEL-9.6.0_HVM-20250910-x86_64-0-Hourly2-GP3 on AWS
+- Red Hat Enterprise Linux 9.7 (BYOS) - x64 Gen2 on Azure
 - Ansible Automation Platform 2.6
 
 A Red Hat Account and related Red Hat Ansible Automation Platform Subscription are requird, because you need to supply a manifest file linked to the subscription.
@@ -23,6 +24,8 @@ var/main.yml includes the following pre-set variables. You should change them ad
 - aap_local_installer_path
 - aap_base_dir
 - aap_installer_dest_path
+
+NOTE: Assumed `aap_base_dir` on AWS is `/home/ec2-user` and assumed `aap_base_dir` on Azure is `/data` respectively.
 
 Also, the following variables should be supplied when using the role. In this project, upper playbooks are supposed to set these variables.
 - rhsm_username

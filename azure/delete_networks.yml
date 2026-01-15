@@ -1,0 +1,39 @@
+---
+- name: Delete a Virtual Network (VNet)
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Fail if variables not defined
+      ansible.builtin.assert:
+        that:
+          - az_resource_group is defined
+          - az_vnet is defined
+          - az_vnet_subnet_name is defined
+          - az_securitygroup_name is defined
+        fail_msg: "Required variables not set"
+
+    - name: Delete security group
+      azure.azcollection.azure_rm_securitygroup:
+        resource_group: "{{ az_resource_group }}"
+        name: "{{ az_securitygroup_name }}"
+        state: absent
+
+    - name: Delete subnet
+      azure.azcollection.azure_rm_subnet:
+        resource_group: "{{ az_resource_group }}"
+        virtual_network_name: "{{ az_vnet }}"
+        name: "{{ az_vnet_subnet_name }}"
+        state: absent
+
+    - name: Delete virtual network
+      azure.azcollection.azure_rm_virtualnetwork:
+        resource_group: "{{ az_resource_group }}"
+        name: "{{ az_vnet }}"
+        state: absent
+
+    - name: Delete resource group
+      azure.azcollection.azure_rm_resourcegroup:
+        name: "{{ az_resource_group }}"
+        force_delete_nonempty: true
+        state: absent
