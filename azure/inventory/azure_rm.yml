@@ -1,0 +1,23 @@
+---
+# required for all azure_rm inventory plugin configs
+plugin: azure.azcollection.azure_rm
+
+# forces this plugin to use a CLI auth session instead of the automatic auth source selection (eg, prevents the
+# presence of 'ANSIBLE_AZURE_RM_X' environment variables from overriding CLI auth)
+auth_source: auto
+
+# fetches VMs from an explicit list of resource groups instead of default all (- '*')
+include_vm_resource_groups:
+  - aap_sandbox
+
+# places hosts in dynamically-created groups based on a variable value.
+keyed_groups:
+# places each host in a group named 'tag_(tag name)_(tag value)' for each tag on a VM.
+  - prefix: tag
+    key: tags.purpose
+# places each host in a group named 'azure_loc_(location name)', depending on the VM's location
+  - prefix: azure_loc
+    key: location
+# places each host in a group named 'azure_rg_(resource group)', depending on the VM's resource group
+  - prefix: azure_rg
+    key: resource_group

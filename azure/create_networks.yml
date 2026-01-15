@@ -1,0 +1,72 @@
+---
+- name: Create a Virtual Network (VNet)
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Fail if variables not defined
+      ansible.builtin.assert:
+        that:
+          - az_resource_group is defined
+          - az_location is defined
+          - az_vnet is defined
+          - az_vnet_cidr_block is defined
+          - az_subnet_cidr_block is defined
+          - az_vnet_subnet_name is defined
+          - az_securitygroup_name is defined
+          - purpose is defined
+        fail_msg: "Required variables not set"
+
+    - name: Create a resource group
+      azure.azcollection.azure_rm_resourcegroup:
+        name: "{{ az_resource_group }}"
+        location: "{{ az_location }}"
+        tags:
+          purpose: "{{ purpose }}"
+
+    - name: Create a virtual network
+      azure.azcollection.azure_rm_virtualnetwork:
+        resource_group: "{{ az_resource_group }}"
+        name: "{{ az_vnet }}"
+        address_prefixes: "{{ az_vnet_cidr_block }}"
+        tags:
+          purpose: "{{ purpose }}"
+
+    - name: Create a demo subnet
+      azure.azcollection.azure_rm_subnet:
+        resource_group: "{{ az_resource_group }}"
+        name: "{{ az_vnet_subnet_name }}"
+        address_prefix: "{{ az_subnet_cidr_block }}"
+        virtual_network: "{{ az_vnet }}"
+
+    - name: Create a network security group
+      azure.azcollection.azure_rm_securitygroup:
+        resource_group: "{{ az_resource_group }}"
+        name: "{{ az_securitygroup_name }}"
+        tags:
+          purpose: "{{ purpose }}"
+        rules:
+          - name: ssh
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 1001
+            direction: Inbound
+          - name: http
+            protocol: Tcp
+            destination_port_range: 80
+            access: Allow
+            priority: 1002
+            direction: Inbound
+          - name: https
+            protocol: Tcp
+            destination_port_range: 443
+            access: Allow
+            priority: 1003
+            direction: Inbound
+          - name: receptor
+            protocol: Tcp
+            destination_port_range: 27199
+            access: Allow
+            priority: 1004
+            direction: Inbound

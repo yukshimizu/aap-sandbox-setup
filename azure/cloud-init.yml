@@ -1,0 +1,40 @@
+#cloud-config
+# Create /data directory early
+bootcmd:
+  # Create a mount point
+  - [ cloud-init-per, once, mymkdir, mkdir, -p, /data ]
+
+# Create filesystem and mount it
+disk_setup:
+  /dev/disk/azure/scsi1/lun0:
+    table_type: gpt
+    layout: true
+    overwrite: true
+
+fs_setup:
+  - device: /dev/disk/azure/scsi1/lun0
+    partition: 1
+    filesystem: xfs
+
+mounts:
+  - [ /dev/disk/azure/scsi1/lun0, /data, xfs, "defaults,nofail", "0", "0" ]
+
+runcmd:
+  # Create some directories
+  - mkdir -p /data/aap
+  - mkdir -p /data/.local
+
+  # Ownership
+  - chown -R azureuser:azureuser /data
+  # SELinux
+  - semanage fcontext -a -t user_home_t '/data(/.*)?'
+  - restorecon -Rv /data
+  - semanage fcontext -a -t data_home_t '/data/aap(/.*)?'
+  - restorecon -Rv /data/aap
+  - semanage fcontext -a -t gconf_home_t '/data/.local(/.*)?'
+  - restorecon -Rv /data/.local
+
+  # Create symlinks from /home/azureuser
+  - ln -s /data/aap /home/azureuser/aap
+  - ln -s /data/.local /home/azureuser/.local
+  - chown -R azureuser:azureuser /home/azureuser
